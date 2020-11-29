@@ -1,0 +1,46 @@
+node
+{
+  def mavenHome = tool name: "maven3.6.3"  
+stage('1. clone the code')
+{
+     git branch: 'development', credentialsId: 'Git-Hub-Credentials', url: 'https://github.com/mylandmarktech-ebay2/maven-web-app.git'
+}
+
+stage('2. Build Package')
+{
+
+sh "${mavenHome}/bin/mvn clean package"
+//bat "${mavenHome}/bin/mvn clean package" for windows systems
+}
+
+stage('3. CodeQualityReport')
+{
+
+sh "${mavenHome}/bin/mvn sonar:sonar"
+//bat "${mavenHome}/bin/mvn sonar:sonar" for windows systems
+}
+
+stage('4. UploadBuildArtifacts')
+{
+
+sh "${mavenHome}/bin/mvn clean deploy"
+//bat "${mavenHome}/bin/mvn clean deployr" for windows systems
+}
+
+stage('5. Deploy to tomcat')
+{
+    deploy adapters: [tomcat9(credentialsId: 'Tomcat_credentials', path: '', url: 'http://107.23.204.224:7777/')], contextPath: null, war: '**/myapps.war'
+}
+
+
+stage('6. email Notification')
+{
+    emailext body: '''Hi
+
+Build status
+Landmark Technology
+''', recipientProviders: [developers()], subject: 'build status', to: 'nfor.rudolph1@gmail.com'
+}
+
+
+}
